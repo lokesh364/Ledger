@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Ledger – Godavari Tent Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* ════════════════════════════════════════════
+   TOKEN SYSTEM — Godavari Tent Works Ledger
+   Subject: a bound accounts register for an Indian
+   event-rental business. Warm paper, ink black,
+   the brand's own marigold-orange, traditional
+   red/black bookkeeping for debit/credit.
+   ════════════════════════════════════════════ */
+:root{
+  --paper:      #FAF6EE;
+  --paper-deep: #F2EBDC;
+  --ink:        #221D17;
+  --ink-soft:   #6B6056;
+  --ink-faint:  #A89C8C;
+  --rule:       #E3D9C6;
+  --rule-soft:  #ECE4D3;
+  --saffron:    #D2691E;
+  --saffron-deep:#B8530F;
+  --credit:     #2F6B4F;
+  --debit:      #A6402F;
+  --white:      #FFFFFF;
+  --shadow-card: 0 1px 2px rgba(34,29,23,.04), 0 4px 16px rgba(34,29,23,.05);
+  --shadow-pop:  0 24px 60px rgba(34,29,23,.22);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'DM Mono', monospace;
+}
+
+body{font-family:var(--font-body);background:var(--paper-deep);min-height:100vh;color:var(--ink);font-size:14px;line-height:1.5}
+input,select,textarea,button{font-family:inherit}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+::-webkit-scrollbar{width:7px;height:7px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--ink-faint);border-radius:4px}
+::selection{background:var(--saffron);color:#fff}
+
+/* ── App shell ── */
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* ── Sidebar — styled like a register's index spine ── */
+.sidebar{width:296px;min-width:260px;background:var(--ink);color:var(--paper);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;position:relative}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:3px;height:100%;background:linear-gradient(180deg,var(--saffron),var(--saffron-deep))}
+.sb-top{padding:24px 20px 16px;flex-shrink:0}
+.sb-brand{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.sb-brand img{height:38px;width:auto;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}
+.sb-brand-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:#fff;line-height:1.2;letter-spacing:.2px}
+.sb-brand-sub{font-size:10px;color:var(--saffron);letter-spacing:1.6px;text-transform:uppercase;margin-top:2px;font-weight:600}
+.sb-add-btn{width:100%;background:var(--saffron);color:#fff;border:none;border-radius:7px;padding:11px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;letter-spacing:.2px;transition:background .15s}
+.sb-add-btn:hover{background:var(--saffron-deep)}
+.sb-search{padding:0 16px 12px;flex-shrink:0}
+.sb-search input{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:9px 12px;font-size:12.5px;outline:none;color:#fff}
+.sb-search input::placeholder{color:rgba(250,246,238,.4)}
+.sb-search input:focus{border-color:var(--saffron);background:rgba(255,255,255,.1)}
+.sb-list{flex:1;overflow-y:auto;padding:4px 12px 8px}
+.sb-party{padding:11px 12px;border-radius:8px;cursor:pointer;margin-bottom:2px;transition:background .12s;border-left:3px solid transparent}
+.sb-party:hover{background:rgba(255,255,255,.06)}
+.sb-party.active{background:rgba(210,105,30,.18);border-left-color:var(--saffron)}
+.sb-party-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-party.active .sb-party-name{color:#fff}
+.sb-party-meta{display:flex;justify-content:space-between;align-items:center}
+.sb-party-mobile{font-size:10.5px;color:rgba(250,246,238,.45);font-family:var(--font-mono)}
+.sb-party-bal{font-size:11.5px;font-weight:600;font-family:var(--font-mono)}
+.sb-party-bal.dr{color:#E0876F}
+.sb-party-bal.cr{color:#7FBFA0}
+.sb-empty{padding:36px 16px;text-align:center;color:rgba(250,246,238,.4);font-size:12px;line-height:1.6}
+.sb-bottom{padding:14px 16px;border-top:1px solid rgba(255,255,255,.08);flex-shrink:0;display:flex;flex-direction:column;gap:7px}
+.sb-bottom-btn{width:100%;padding:9px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:rgba(250,246,238,.85);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s}
+.sb-bottom-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)}
+
+/* ── Main scroll area ── */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--paper-deep)}
+
+/* ── Dashboard ── */
+.dashboard{padding:36px 40px;max-width:1080px;margin:0 auto;width:100%}
+.dash-title{font-family:var(--font-display);font-size:28px;font-weight:600;color:var(--ink);margin-bottom:5px;letter-spacing:-.2px}
+.dash-sub{font-size:13px;color:var(--ink-soft);margin-bottom:28px}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.dstat{background:var(--white);border:1px solid var(--rule);border-radius:11px;padding:20px 22px;box-shadow:var(--shadow-card)}
+.dstat-lbl{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:1.3px;text-transform:uppercase;margin-bottom:8px}
+.dstat-val{font-size:26px;font-weight:600;font-family:var(--font-mono);letter-spacing:-.5px}
+.dash-search-row{display:flex;gap:10px;margin-bottom:16px}
+.dash-search{flex:1;background:var(--white);border:1.5px solid var(--rule);border-radius:9px;padding:11px 16px;font-size:13px;outline:none;color:var(--ink)}
+.dash-search:focus{border-color:var(--saffron)}
+.dash-table-wrap{background:var(--white);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow-card)}
+table.dash-table{width:100%;border-collapse:collapse}
+table.dash-table thead th{background:var(--paper);padding:12px 18px;font-size:10px;font-weight:700;color:var(--ink-soft);letter-spacing:1.1px;text-transform:uppercase;text-align:left;border-bottom:1.5px solid var(--rule);cursor:pointer;user-select:none}
+table.dash-table thead th.num{text-align:right}
+table.dash-table thead th:hover{color:var(--saffron-deep)}
+table.dash-table tbody td{padding:13px 18px;font-size:13px;border-bottom:1px solid var(--rule-soft)}
+table.dash-table tbody tr{cursor:pointer;transition:background .1s}
+table.dash-table tbody tr:hover{background:var(--paper)}
+table.dash-table tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-family:var(--font-mono);font-weight:600}
+.dash-empty{text-align:center;padding:60px 16px;color:var(--ink-faint);font-size:13px;line-height:1.7}
+
+/* ── Topbar (party ledger view) ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--rule);padding:16px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:50}
+.tb-left{display:flex;align-items:center;gap:14px}
+.tb-back{background:none;border:none;color:var(--ink-soft);cursor:pointer;font-size:13px;font-weight:600;padding:7px 10px;border-radius:7px;transition:background .15s;display:flex;align-items:center;gap:5px}
+.tb-back:hover{background:var(--paper)}
+.tb-party-title{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink)}
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tb-btn{padding:9px 15px;border-radius:8px;border:1.5px solid var(--rule);background:var(--white);color:var(--ink-soft);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s}
+.tb-btn:hover{background:var(--paper);border-color:var(--ink-faint);color:var(--ink)}
+.tb-btn.primary{background:var(--saffron);color:#fff;border:none}
+.tb-btn.primary:hover{background:var(--saffron-deep)}
+.tb-btn.green{background:#EAF4EE;border-color:#C9E3D4;color:var(--credit)}
+.tb-btn.green:hover{background:#DCEEE3}
+.tb-btn.danger{border-color:#EFC8C0;color:var(--debit)}
+.tb-btn.danger:hover{background:#FBEEEB}
+
+.container{max-width:980px;margin:0 auto;padding:28px 32px 60px;width:100%}
+
+/* ── Party Details (edit form) ── */
+.acct-card{background:var(--white);border:1px solid var(--rule);border-radius:13px;padding:24px 28px;margin-bottom:20px;box-shadow:var(--shadow-card)}
+.acct-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap}
+.acct-field{flex:1;min-width:200px}
+.acct-lbl{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:7px;display:block}
+.acct-inp{width:100%;border:1.5px solid var(--rule);border-radius:8px;padding:10px 14px;font-size:13.5px;color:var(--ink);outline:none;transition:border-color .15s;font-family:inherit;background:var(--white)}
+.acct-inp:focus{border-color:var(--saffron);box-shadow:0 0 0 3px rgba(210,105,30,.1)}
+.party-title{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--saffron-deep);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.party-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+@media(max-width:800px){.party-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.party-grid{grid-template-columns:1fr}}
+
+/* ── Party info display box ── */
+.party-box{background:var(--white);border:1px solid var(--rule);border-radius:13px;padding:20px 26px;margin-bottom:20px;display:flex;gap:20px;flex-wrap:wrap;align-items:center;box-shadow:var(--shadow-card)}
+.party-box-avatar{width:50px;height:50px;border-radius:50%;background:linear-gradient(150deg,var(--saffron),var(--saffron-deep));color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:19px;font-weight:600;flex-shrink:0}
+.party-box-info{flex:1;min-width:200px}
+.party-box-name{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink);margin-bottom:6px}
+.party-box-tags{display:flex;gap:16px;flex-wrap:wrap}
+.party-box-tag{font-size:11.5px;color:var(--ink-soft);display:flex;align-items:center;gap:5px}
+.party-box-edit{background:var(--paper);border:1.5px solid var(--rule);border-radius:8px;padding:8px 16px;font-size:11.5px;font-weight:600;color:var(--saffron-deep);cursor:pointer;flex-shrink:0;transition:all .15s}
+.party-box-edit:hover{background:var(--rule-soft);border-color:var(--ink-faint)}
+
+/* ── Save status panel ── */
+.save-panel{background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:13px 18px;margin-top:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.save-mode-row{display:flex;align-items:center;gap:10px}
+.save-mode-lbl{font-size:11px;font-weight:700;color:var(--ink-soft);letter-spacing:.6px}
+.save-status{font-size:11.5px;color:var(--ink-faint)}
+.save-status.active{color:var(--credit);font-weight:600}
+
+/* ── Summary cards ── */
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.sum-card{background:var(--white);border:1px solid var(--rule);border-radius:13px;padding:20px 24px;box-shadow:var(--shadow-card)}
+.sum-lbl{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:1.1px;text-transform:uppercase;margin-bottom:9px}
+.sum-val{font-family:var(--font-mono);font-size:27px;font-weight:600;letter-spacing:-.5px}
+.sum-val.debit{color:var(--debit)}
+.sum-val.credit{color:var(--credit)}
+.sum-val.balance{color:var(--ink)}
+.sum-sub{font-size:11px;color:var(--ink-faint);margin-top:5px}
+
+/* ── Entry form ── */
+.entry-card{background:var(--white);border:1px solid var(--rule);border-radius:13px;padding:22px 26px;margin-bottom:20px;box-shadow:var(--shadow-card)}
+.entry-title{font-family:var(--font-display);font-size:14px;font-weight:600;color:var(--saffron-deep);margin-bottom:16px}
+.entry-grid{display:grid;grid-template-columns:140px 1fr 130px 130px 124px;gap:10px;align-items:end}
+.ef-lbl{font-size:10px;font-weight:700;color:var(--ink-faint);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;display:block}
+.ef-inp{width:100%;border:1.5px solid var(--rule);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--ink);outline:none;transition:border-color .15s;background:var(--white)}
+.ef-inp:focus{border-color:var(--saffron);box-shadow:0 0 0 3px rgba(210,105,30,.1)}
+.ef-add-btn{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;transition:background .15s}
+.ef-add-btn:hover{background:var(--saffron-deep)}
+
+/* ── Ledger table — register feel: hairlines, tabular nums ── */
+.ledger-card{background:var(--white);border:1px solid var(--rule);border-radius:13px;overflow:hidden;box-shadow:var(--shadow-card)}
+table.ledger{width:100%;border-collapse:collapse}
+table.ledger thead th{background:var(--paper);padding:13px 18px;font-size:10px;font-weight:700;color:var(--ink-soft);letter-spacing:1.1px;text-transform:uppercase;text-align:left;border-bottom:1.5px solid var(--rule)}
+table.ledger thead th.num{text-align:right}
+table.ledger tbody td{padding:13px 18px;font-size:13px;border-bottom:1px solid var(--rule-soft);vertical-align:middle}
+table.ledger tbody tr:hover{background:var(--paper)}
+table.ledger tbody tr:last-child td{border-bottom:none}
+td.num{text-align:right;font-family:var(--font-mono);font-weight:600;font-variant-numeric:tabular-nums}
+td.date-cell{color:var(--ink-soft);font-size:11.5px;white-space:nowrap;font-family:var(--font-mono)}
+td.debit-cell{color:var(--debit)}
+td.credit-cell{color:var(--credit)}
+td.balance-cell{color:var(--ink);font-weight:700}
+.empty-row td{text-align:center;padding:56px 16px;color:var(--ink-faint);font-size:13px}
+.del-btn{background:none;border:none;color:var(--rule);cursor:pointer;font-size:17px;padding:2px 6px;transition:color .15s;line-height:1}
+.del-btn:hover{color:var(--debit)}
+.particulars-cell{max-width:280px}
+
+.export-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap}
+.note-textarea{width:100%;border:1.5px solid var(--rule);border-radius:9px;padding:11px 14px;font-size:13px;color:var(--ink);outline:none;resize:vertical;min-height:60px;margin-top:14px;font-family:inherit;background:var(--white)}
+.note-textarea:focus{border-color:var(--saffron)}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(34,29,23,.5);display:none;align-items:center;justify-content:center;z-index:200;padding:20px;backdrop-filter:blur(2px)}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--white);border-radius:16px;padding:28px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-pop)}
+.modal-title{font-family:var(--font-display);font-size:19px;font-weight:600;color:var(--ink);margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.modal-btn{padding:10px 19px;border-radius:9px;border:1.5px solid var(--rule);background:var(--white);font-size:13px;font-weight:600;cursor:pointer;color:var(--ink-soft);transition:all .15s}
+.modal-btn:hover{background:var(--paper)}
+.modal-btn.primary{background:var(--saffron);color:#fff;border:none}
+.modal-btn.primary:hover{background:var(--saffron-deep)}
+.modal-btn.primary:disabled{background:var(--ink-faint);cursor:not-allowed}
+.import-options{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.import-opt{border:1.5px solid var(--rule);border-radius:11px;padding:15px 17px;cursor:pointer;transition:all .15s}
+.import-opt:hover{border-color:var(--saffron)}
+.import-opt.selected{border-color:var(--saffron);background:#FDF3E9}
+.import-opt-title{font-size:13.5px;font-weight:700;margin-bottom:4px;color:var(--ink)}
+.import-opt-desc{font-size:11.5px;color:var(--ink-soft);line-height:1.55}
+.import-opt-cols{font-size:10.5px;color:var(--saffron-deep);margin-top:7px;font-family:var(--font-mono)}
+
+/* ── PDF doc (hidden, used only for export) ── */
+#pdf-doc{position:absolute;left:-9999px;top:0;width:794px;background:#fff}
+.pdf-page{width:794px;height:1123px;padding:40px 48px;position:relative;background:#fff;overflow:hidden}
+.pdf-header{display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:2px solid #111;margin-bottom:20px}
+.pdf-header img{height:54px}
+.pdf-divider{width:1.5px;height:48px;background:#ddd}
+.pdf-biz-name{font-family:'Fraunces',Georgia,serif;font-size:24px;font-weight:600;color:#111}
+.pdf-biz-sub{font-size:10px;color:#888;margin-top:3px}
+.pdf-title-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.pdf-ledger-title{font-size:18px;font-weight:700;color:#111}
+.pdf-period{font-size:11px;color:#888}
+.pdf-table{width:100%;border-collapse:collapse;font-size:11px}
+.pdf-table th{background:#f3f4f6;padding:8px 10px;font-size:9px;font-weight:700;color:#666;text-align:left;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid #ddd}
+.pdf-table th.num{text-align:right}
+.pdf-table td{padding:8px 10px;border-bottom:1px solid #eee}
+.pdf-table td.num{text-align:right;font-family:'IBM Plex Mono',monospace}
+
+@media(max-width:900px){
+  .app{flex-direction:column;height:auto;overflow:visible}
+  .sidebar{width:100%;min-width:unset;max-height:280px}
+  .entry-grid{grid-template-columns:1fr 1fr}
+  .summary-row{grid-template-columns:1fr}
+  .dash-stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ═══════════ SIDEBAR ═══════════ -->
+  <div class="sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <img src="data:image/png;base64,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bqzqfG7kia2/pmxJJt1fUsMLT67P5dvbcqKcVdJ2NOainsQwk4y5IZYJGt+VjnEl0Z8iDuR6EeRUOWnFRn6JHfLsOQJyOY8R4reOptPrsCHMvbmRqDY+B8FZGf405+5E+DBYGvjeYbCzcsdq9vqI2jbf3cVW0psWchPkshalu5Cwd5rMx3e7yA8mjwaOgXK+68MtiZkMEbpJHnZrWjckqHP1qcqA4IrsugyCm0+iSNOu+C3PqcyvZ0JhpM5qilRa3dhkD5T5MHUrUTQAAANgOgUG4S6NOm8Ybd5o/pGyBzj/AIbfBvv5qcroOGaY6RleKILOfmew2C5riqqtn5vhhm7GZDudyiIisirCIiIiIiIiIiIiIiIiIiIi/K3Xgt1ZatmJssMrSx7HDcOB7wqB4k8PrmnbMl7HRvs4l7twQN3Qb/hd6eR+60GuHNa5pa5oc0jYgjcELU1ajwanD4X5OGh6fhbijVqPSovFDzadR1+x7rIS+eRm+/I3f2V/at4VYXLPfZxkhxdl3UhjOaJx9W9Nvp9lX97hPq2vIWwxVLTfB0c236O2K5xOYbqEs6wZxDq3P21XT5LE9Nmm3L+E9HZe+nuoGinVThTq6ZwEkFWu097nzg7fQKbaU4R0KMrLOatfHSNO4ijBbGD6nvP6LxK4dqEw4Dllo6nL8r1N4mpss0nmBx6Nz/C8HgjpCaxkG6hvRFleD/Z2uH8x3n7BXYviGKOGJsULGsjYNmtaNgAvtdOpVNh06XEFmZ1J6lcqq9UiVOZMZ+Q0A6BdXLY6llaElHIV2T15Bs5jh+o8j6qps/wam7d0mDykXZE7iK0CC30DgDv9grjRJ+kyk+Bz23I30KU6sTlOJ5D7A7aj0VGUeDmekl2t5ChBHv1LC552+wVkaM0HhdNbTRMNq54zyjqPYeClaKPJYfkZN3HDZd3U5qRPYjqE8zlxH2b0GX5RERbpaNERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERf/2Q==" alt="logo"/>
+        <div><div class="sb-brand-title">Godavari Tent Works</div><div class="sb-brand-sub">Ledger System</div></div>
+      </div>
+      <button class="sb-add-btn" onclick="openAddPartyModal()">+ Add New Party</button>
+    </div>
+    <div class="sb-search">
+      <input type="text" id="sb-search-input" placeholder="🔍 Search parties..." oninput="renderSidebar()"/>
+    </div>
+    <div class="sb-list" id="sb-list"></div>
+    <div class="sb-bottom">
+      <button class="sb-bottom-btn" onclick="document.getElementById('import-parties-file').click()">📥 Import Parties (Excel)</button>
+      <input type="file" id="import-parties-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="handlePartiesImport(event)"/>
+      <button class="sb-bottom-btn" onclick="exportAllJSON()">💾 Backup All Data</button>
+      <button class="sb-bottom-btn" onclick="document.getElementById('import-all-file').click()">📂 Restore Backup</button>
+      <input type="file" id="import-all-file" accept=".json" style="display:none" onchange="importAllJSON(event)"/>
+    </div>
+  </div>
+
+  <!-- ═══════════ MAIN AREA ═══════════ -->
+  <div class="main" id="main-area"></div>
+
+</div>
+
+<!-- ═══════════ ADD PARTY MODAL ═══════════ -->
+<div class="modal-overlay" id="add-party-modal">
+  <div class="modal-box">
+    <div class="modal-title">Add New Party</div>
+    <div class="acct-field" style="margin-bottom:12px">
+      <label class="acct-lbl">Party Name *</label>
+      <input class="acct-inp" id="new-party-name" placeholder="e.g. Ramesh Kumar"/>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="acct-field">
+        <label class="acct-lbl">Mobile</label>
+        <input class="acct-inp" id="new-party-mobile" type="tel" placeholder="9876543210"/>
+      </div>
+      <div class="acct-field">
+        <label class="acct-lbl">Email</label>
+        <input class="acct-inp" id="new-party-email" type="email" placeholder="optional"/>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="acct-field">
+        <label class="acct-lbl">GST Number</label>
+        <input class="acct-inp" id="new-party-gst" placeholder="optional"/>
+      </div>
+      <div class="acct-field">
+        <label class="acct-lbl">Opening Balance</label>
+        <input class="acct-inp" id="new-party-opening" type="number" placeholder="0"/>
+      </div>
+    </div>
+    <div class="acct-field">
+      <label class="acct-lbl">Address</label>
+      <textarea class="acct-inp" id="new-party-address" rows="2" style="resize:vertical"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('add-party-modal')">Cancel</button>
+      <button class="modal-btn primary" onclick="createParty()">Create Party</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ EXCEL IMPORT MODAL ═══════════ -->
+<div class="modal-overlay" id="import-choice-modal">
+  <div class="modal-box">
+    <div class="modal-title">Import Excel File</div>
+    <p style="font-size:12px;color:#888;margin-bottom:16px">What does this file contain?</p>
+    <div class="import-options">
+      <div class="import-opt" id="opt-parties" onclick="selectImportType('parties')">
+        <div class="import-opt-title">👥 New Parties List</div>
+        <div class="import-opt-desc">Bulk-create multiple party profiles at once</div>
+        <div class="import-opt-cols">Columns: Name, Mobile, Email, GST, Address, Opening Balance</div>
+      </div>
+      <div class="import-opt" id="opt-continue" onclick="selectImportType('continue')">
+        <div class="import-opt-title">🔄 Continue This Ledger</div>
+        <div class="import-opt-desc">Re-import a ledger Excel you exported earlier — restores party details and adds only new entries (duplicates skipped automatically)</div>
+        <div class="import-opt-cols">Use the exact .xlsx file downloaded from "📊 Excel"</div>
+      </div>
+      <div class="import-opt" id="opt-entries" onclick="selectImportType('entries')">
+        <div class="import-opt-title">📒 Ledger Entries</div>
+        <div class="import-opt-desc">Add transaction entries to the currently open party</div>
+        <div class="import-opt-cols">Columns: Date, Particulars, Debit, Credit</div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="closeModal('import-choice-modal')">Cancel</button>
+      <button class="modal-btn primary" id="import-confirm-btn" onclick="confirmImportType()" disabled>Continue</button>
+    </div>
+  </div>
+</div>
+
+<div id="pdf-doc"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const LOGO_DATA = "data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCACUAMcDASIAAhEBAxEB/8QAHAABAAMAAwEBAAAAAAAAAAAAAAYHCAEEBQID/8QAQRAAAQQBAgMGBAMEBQ0AAAAAAQACAwQFBhEHEiETMUFRYXEUIoGRQlKhCCMyMxVikrHBFhckJTRDU2NygqPh4v/EABsBAQACAwEBAAAAAAAAAAAAAAAEBgMFBwIB/8QAMBEAAQIEBAQEBgMBAAAAAAAAAQACAwQFEQYhMUESE1FhcYGRoSKxwdHh8BQyQiP/2gAMAwEAAhEDEQA/ANloiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIirrifqK9pTWemst2s78TNFZq3K4PyFxMbmOA/OA1+3puFgmJhkvDMR+g1UmUlXzUUQYf9je3kL289ArFVQcZOJz6NmfSmk52PyoHLeuN+ZlEH8I8DKR12/D0J8FabJauYw5kp3C6vaiIZPA/rs4bbtPgf7lm7WuhrOibYrtY+XHzPc6C0dyXuJ3Iefz+J37+/wA9tPiGoTEnKcyXbe+/Tut5hqmy85OcuZNrf56np5bjVTjhHxF+Hgr6f1Hbe9rQI696Z+7j5Nkce/8A6j9fNXKCCNx1CyzpHTl/UuUbRpRnl75ZCPlY3zK0tp3GNw2FrYxliadsDOUPldufb28lDwrPzc1BIji7Ro7r27+KmYvp8lKxw6AbOOrRoO/bwXoIoHxF4m4fSWQr4iNhyWWkc10tWF3WvCT1kkP4em/KD1d4dNyppjbtXI0Ib1KZk1edgfG9p6EFWVseE6IYQcOIajdVV8rGZCbGc0hp0OxXYREWZYERERERERERERERERERERERERERcPc1jC97g1rRuSTsAFTOtuNUb5pcfoaCG+W7tflJt/hmn/lgfzfcfL6lRpqbgykPmRnWClycjHnYnLgN4j+6q5JpYoYzJNIyNg73OcAB9VGr/EXQVCbsLessBFLvt2fx8Zdv5bA77rNObnyOoZu21LlLWXfvuI53bQtP9WMbNH2JXxFFFE0NiiYxo7g1oAVQmcawmutBhkjqTb7q6yuBXubeYi2PQC/v+FpWlxK4fXJRFX1pgXPd0DTejaT7bkL74iYGDWGkJK1SSKWZhFipK1wI52jpsR4EEj2KzS5rXDZzQQfAhSDQGqb2kL7X0iTQe4dvUB+Rw8S0dwd6jv8AFY4WL4MzeDMwrNdkSDfXyWWLguLLER5OLd7cwCNx3XY0fq/O6PtPrxAur9oTPTm7ubx2/KfbvViTcUtEZzFvx+oaV6tHM3aRklZ0zAfMOj3PQ9x2BX7a70TR1lj4tS6bkjbbnjEm38LLII6b+TvDf6FUvkqF3G2nVchUmqzsOxZI0g/+/dQos1UKHeCQHwTpfMEHv9FOhSlNr552cOMP7WNnAjtv46q3cJxF4ZaVxgo4ixfsn+J3Y4+Zz3n1cWgfqo1q7jBnstE6rpuicLXfuHW7BD7G39Vg3a0+pJVfLlrXOcGtaXE9wA3KiRMVTZhCFAaGDTL6KXCwjJiMY0dzoh1+I/Oy/CtWjgfLIC9807zJPNI4uklee9znHqSrR4H6rsUMm3T1hss1Ky4mLlaXdi89/d3NPj5Hr5rwtKcPtQ557X/Cvp1Ses045enoO8q7dF6PxWl6vLUZ2tlw/eWHj5ne3kFIw9TahEmmzWbRuTuOne/VRcS1anQ5R0pk47Af5OxvtZSNERdMXK0RERERERERERERERERERERERFxIxskbo3tDmuBDgfEFZi4had/yY1TYxscfJVeO2q7DYdmSeg9juPstPKJ8StHxatxteNkjILlaUOimI32YSOdv1A39wFosQUs1CULWD425j7easGG6sKbOBzz8Dsj9D5fK6zhBFLPKIoY3yPd3NY3cn6KX4fhnqzIxiQ0mVGHqDYfyn7d6urSGjsNpqu0VK7ZLG3z2JBu8+3kpEtDIYMZwh027PoPurDUccP4i2TYLdT9ln29wn1ZWhdJEynaI/BFNs4/2gB+qhFytYp2pKtuCSCeM8r45Glrmn1BWuVRn7SHwkOqcCIywWrNSwZmjvcyN0XK4+xe4eu/p0w1zC8CVlnTEuT8OoOeXZSMP4rmJyabLTDQeK9iMtr5qU/s+Xnz6Ut0HvLvhLRMY/Kx4B2/tc5+qn+TxmPycXZZClBZZ5SMB2Vefs9U5IdPZC69uzbFgNb68o/+lZNyxBTqy2rUrIYIWGSSR52DWgbkn6Kz0IGJTIQii+W/S+XsqniFwh1WMYRtnt1sL+91E8to/QWMpTZLJUKNOpA3nlmmfyMYB4kk7BV7NxS0fj5C3R2jnX4x0bblaK8buve3mBeR67DdQrX2rrmv8x8ZKZIcDA//AFfSJ6SAf76QeJPe0H+EbeK8lVWqV+BLRjDkYTbjV1h7K4UnDkeZgiJPxXG/+eI+6tTHcbb/AGrf6R0xEIyepr3N3NHXwc0b+HiFZmkNXYPVNYyYu1+9YN5a0o5ZY/dvl6jceqz1pvSme1DucXQfLGO+VxDWD6ld3I6e1boq5DlZK0lV0TvkswuD2D0JHgfI969yWJKkwc6YhF0PcgEW89P3VeJ7DFKiO5MvFDIuwLr+o19PQrSyKNcO9VQarwLbfK2K3CeztRA78rvMeh7x9R4KSq+QI7I8NsWGbg5hc8mZeJLRXQYos5uRRERZVgREREREREREREREREREXj6mzsWEfimSxh5yORjos3fy8peHHf1/h7vVfCQ0XK9NaXGw1XsIiL6vK8rVuaj07p25m5qli1DUYJJY4AC/k3HMRuQOg3Pf4KE/56tJBgLqebD9tywU9yPTcO2/VWBmqUeSxFuhMwPZYhfG5p7juCFkwwyVpJKswIlge6J4Pfu07H+5VrENWmaYGPhAEG4N76+qteGqNKVXmMjEhzbEWI09D+lWxm+OPMwx6f0xcdIe6bISMijHrysc5x9uir3GUs9rbWDrV2d17J2+Vj5A3ljgiH4Wj8LRuT6kryVcHCzWOhMTRZRl58TefsJZ7TfklPpIOgG/g7l+qrECox67HECZiBjNSBlft4+atcxTYFAgGPKQi+JpfW3c9vJWfp7F18Lhq2NrACOBnLv+Y+J+6qX9pDVPMaug6Mm8luMWso5p/l1wdmMPXvkcD0/K13mFMdc8T9LaaxznRZGtk8lI3/RaFSUSSyu8N9t+Rvm52wCzzLYvZDIW8vlZu2yN6XtrDgegO2wY3ya0AAD0VjxDVIchKciCfiIsANh1+yrGGqRFn5z+THHwg3JO5/dVwAAAANgO5SjhxpabVGcbCeZtOHZ9h+3h5e5XgY6layN2KnThdLPK7la1oWlOH2motMafjpDldZf89h4/E4+HsFTsO0g1CY4nj4G69+37srriWsimy3DDP/R2nbv9u69rHUquOpR06cLYYIxs1rRsFzkKle/RnpW42yQTxmORpHeCNl+6LrAY0N4QMlx0vcXcd89brPXD6/NpDifNibDi2L4t1CcEHqCf3T/ruw/9xWhVmzjABBxYzHY/K50daYkd/MYwN/fZgWi8XZbdxlW43blnhZKPZzQf8VWqA7kx5iS2Y648Dt+9Va8St58CWnj/AGe2zvEW/PouwiIrOqkiIiIiIiIiIiIiIiIirT9oWeSpp3B3ojyurZuGUHfbYhkm367Ky1A+PdE3OGd6Rg3fTmgtDpvsGSt5z/YLlDqDXOlIgbrwn5KfSnNbOwi7TiF/VTTGXIshjq16AgxWImyNPoRuuwq04CagF7BS4OeTexRPNED+KEnpt7HcfUeastKfNtnJZkZu499/dKnJOkZt8B2xy8NvZFVOouEsmV1NkcnDlIqsFubtRH2RcQSBzeI8d1ayJOyECehiHHbcXv8Atl5kKjMSEQxJd1iRbr81Sl/gxk2RF1LMVZnj8Msbmb/UbqvNQYTJ4K8aOVqPry7bjfq1482nuIWrlCeNWIjyWhbdkRNdZoN+IiO3zbD+JoPqP8FWKphOWMFz5W7XDO17g+qttIxhNc9sObIc0m17WI75bdVRuiNMx5/NjGVZ6tGaRpeHOjPz7dSOg79vNWDHwXvdoO0zlcM8S2E7/wB6rbTuRfi83RycTiDBM2Tfzbv1/TdaU1rfkraGy2QqPLZG0JJIng9x5DsVq8N02RqEF5jtu5p6nTbfxW2xRVKhT47BLvs146DUa/MLp6K0RiNMM567TPbcNnTyDr9B4KUKF8GtRNz2iKTZpzJfpRMgtczt3OIHR58TzDrv58w8FNFeqeJcS7TLABhFxb916rn1T/k/yntmiS8Gxv8AunRERQTi/r2DSGGNWk5k+fusc2jX335T3GV/kxvf69w71JixWQWF7zYBRYMF8eIIcMXJ0VJ6/wAgMrxM1PdjIMLLoqRO8xDG1jv/ACCQLR2hXc2i8KfKjCPswBZUo1zBXZCZHSvJJfI7ve8ndzj6kkn6rWOkq7qmlsVWeNnR04muHkeQb/qqThmYM1UZiOND98vZXvFkuJSnS0vu3L0GfuvTREV6XP0REREREREREREREREXVzFGHJ4m3jrDQ6K1C+F4I3BDgQd/uu0i+EXyK+gkG4WV8DeyWj9UNlaQbePmdDKOu0rQdnA+jh19OnktMadzNHPYiHJ4+UPhlHd4sd4tI8CFUnHnS8lfIM1LThLq84EdvlH8D/wuPoe7fzA81CtG6ry2lbrp8fIHxSfzq8n8uTyPofULnsrPuoE8+VjD/kTcdr6H6HwXS5yntxHIQ5uCQIoFj3tqD8x491qBFX2D4u6Tus5cjLPiJgPmFlhMZ8yHt3G3vsfRe47X+iGxGV2q8OGAb83xTdtvur1BnZeO3jhvBHiufR6fNQHcESGQfAqSqGcas5Dg+HWTe+QCxbj+Eqs3+Z8knygD2BJPkAV42o+NekKELm4U29Q2yPkjpRERehdM/ZgHsSfQqmtUZ7NauzbMxqB8TXQgtqU4HEw1WnvIJ6uefFx9hsFqavXZaSguDXAv2Az9VuqLh2anIzXPYWsBuScvRdCJvJGxn5QAtNCB+W4Y/DvaXPtYrlLfMmPuWbqFeS3egqxN5nyvDGj1JWr8bXFXHV6rRsIoms+w2VdwVDcXxnbWA+aseOojWsgtGtyfksr6SzmU07ahvY2cwztYGSNPVrx4tcPEbqzqfG7kia2/pmxJJt1fUsMLT67P5dvbcqKcVdJ2NOainsQwk4y5IZYJGt+VjnEl0Z8iDuR6EeRUOWnFRn6JHfLsOQJyOY8R4reOptPrsCHMvbmRqDY+B8FZGf405+5E+DBYGvjeYbCzcsdq9vqI2jbf3cVW0psWchPkshalu5Cwd5rMx3e7yA8mjwaOgXK+68MtiZkMEbpJHnZrWjckqHP1qcqA4IrsugyCm0+iSNOu+C3PqcyvZ0JhpM5qilRa3dhkD5T5MHUrUTQAAANgOgUG4S6NOm8Ybd5o/pGyBzj/AIbfBvv5qcroOGaY6RleKILOfmew2C5riqqtn5vhhm7GZDudyiIisirCIiIiIiIiIiIiIiIiIiIi/K3Xgt1ZatmJssMrSx7HDcOB7wqB4k8PrmnbMl7HRvs4l7twQN3Qb/hd6eR+60GuHNa5pa5oc0jYgjcELU1ajwanD4X5OGh6fhbijVqPSovFDzadR1+x7rIS+eRm+/I3f2V/at4VYXLPfZxkhxdl3UhjOaJx9W9Nvp9lX97hPq2vIWwxVLTfB0c236O2K5xOYbqEs6wZxDq3P21XT5LE9Nmm3L+E9HZe+nuoGinVThTq6ZwEkFWu097nzg7fQKbaU4R0KMrLOatfHSNO4ijBbGD6nvP6LxK4dqEw4Dllo6nL8r1N4mpss0nmBx6Nz/C8HgjpCaxkG6hvRFleD/Z2uH8x3n7BXYviGKOGJsULGsjYNmtaNgAvtdOpVNh06XEFmZ1J6lcqq9UiVOZMZ+Q0A6BdXLY6llaElHIV2T15Bs5jh+o8j6qps/wam7d0mDykXZE7iK0CC30DgDv9grjRJ+kyk+Bz23I30KU6sTlOJ5D7A7aj0VGUeDmekl2t5ChBHv1LC552+wVkaM0HhdNbTRMNq54zyjqPYeClaKPJYfkZN3HDZd3U5qRPYjqE8zlxH2b0GX5RERbpaNERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERERf/2Q==";
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let parties = [];          // [{id, name, mobile, email, gst, address, openingBal, openingType, note, entries:[], entryIdc}]
+let activePartyId = null;  // null = dashboard view
+let partyIdc = 1;
+let entryIdcGlobal = 1;
+let autosaveOn = true; // always-on by default — no toggle needed, data is never lost on refresh
+let lastUsedDate = ''; // remembers the last entry date so it stays set after each entry is added
+let pendingImportFile = null;
+let selectedImportType = null;
+let sortCol = 'name', sortDir = 1;
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+function init(){
+  const saved = localStorage.getItem('godavari_ledger_multi');
+  if(saved){
+    try{
+      const data = JSON.parse(saved);
+      parties = data.parties||[];
+      partyIdc = data.partyIdc||1;
+      entryIdcGlobal = data.entryIdcGlobal||1;
+    }catch(e){ console.error('Load failed', e); }
+  }
+  renderSidebar();
+  renderMain();
+}
+
+function saveIfAuto(){ if(autosaveOn) saveToLocal(); }
+function saveToLocal(){
+  try{
+    localStorage.setItem('godavari_ledger_multi', JSON.stringify({parties, partyIdc, entryIdcGlobal}));
+  }catch(e){ console.error('Save failed', e); }
+}
+
+// Safety net: force a save right before the tab closes or refreshes,
+// in case any change slipped through without triggering saveIfAuto().
+window.addEventListener('beforeunload', saveToLocal);
+window.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') saveToLocal(); });
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtNum(n){ if(!n) return '0.00'; return Math.abs(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtDate(d){ if(!d) return ''; const dt=new Date(d+'T00:00:00'); return dt.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function getParty(id){ return parties.find(p=>p.id===id); }
+
+function calcBalance(party){
+  let running = party.openingType==='dr' ? party.openingBal : -party.openingBal;
+  party.entries.forEach(e=>{ running += e.debit - e.credit; });
+  return running; // positive = Dr, negative = Cr
+}
+function calcTotals(party){
+  const totalDebit = party.entries.reduce((s,e)=>s+e.debit,0);
+  const totalCredit = party.entries.reduce((s,e)=>s+e.credit,0);
+  return {totalDebit, totalCredit};
+}
+
+// ═══════════════════════════════════════
+// SIDEBAR RENDER
+// ═══════════════════════════════════════
+function renderSidebar(){
+  const list = document.getElementById('sb-list');
+  const q = (document.getElementById('sb-search-input')?.value||'').toLowerCase().trim();
+  let filtered = parties;
+  if(q) filtered = parties.filter(p=> (p.name||'').toLowerCase().includes(q) || (p.mobile||'').includes(q));
+
+  if(!filtered.length){
+    list.innerHTML = '<div class="sb-empty">'+(parties.length?'No parties match search':'No parties yet — click "+ Add New Party"')+'</div>';
+    return;
+  }
+
+  list.innerHTML = filtered.map(p=>{
+    const bal = calcBalance(p);
+    const balCls = bal>=0?'dr':'cr';
+    const balTxt = fmtNum(Math.abs(bal)) + ' ' + (bal>=0?'Dr':'Cr');
+    return '<div class="sb-party'+(p.id===activePartyId?' active':'')+'" onclick="openParty('+p.id+')">'+
+      '<div class="sb-party-name">'+esc(p.name)+'</div>'+
+      '<div class="sb-party-meta">'+
+        '<span class="sb-party-mobile">'+esc(p.mobile||'—')+'</span>'+
+        '<span class="sb-party-bal '+balCls+'">'+balTxt+'</span>'+
+      '</div></div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function openParty(id){
+  activePartyId = id;
+  renderSidebar();
+  renderMain();
+}
+function backToDashboard(){
+  activePartyId = null;
+  renderSidebar();
+  renderMain();
+}
+
+// ═══════════════════════════════════════
+// MAIN RENDER DISPATCH
+// ═══════════════════════════════════════
+function renderMain(){
+  const main = document.getElementById('main-area');
+  if(activePartyId===null){
+    main.innerHTML = renderDashboard();
+  } else {
+    const party = getParty(activePartyId);
+    if(!party){ activePartyId=null; main.innerHTML = renderDashboard(); return; }
+    main.innerHTML = renderPartyLedger(party);
+    // Restore the last-used date so the user doesn't have to re-select it after each entry
+    const ef = document.getElementById('ef-date');
+    if(ef) ef.value = lastUsedDate || new Date().toISOString().slice(0,10);
+  }
+}
+
+// ═══════════════════════════════════════
+// DASHBOARD VIEW
+// ═══════════════════════════════════════
+function renderDashboard(){
+  const totalParties = parties.length;
+  let totalDr=0, totalCr=0;
+  parties.forEach(p=>{ const b=calcBalance(p); if(b>=0) totalDr+=b; else totalCr+=Math.abs(b); });
+
+  const q = (window.__dashSearch||'').toLowerCase().trim();
+  let rows = parties.filter(p=> !q || (p.name||'').toLowerCase().includes(q) || (p.mobile||'').includes(q) || (p.gst||'').toLowerCase().includes(q));
+
+  // Sort
+  rows = [...rows].sort((a,b)=>{
+    let av,bv;
+    if(sortCol==='name'){ av=(a.name||'').toLowerCase(); bv=(b.name||'').toLowerCase(); }
+    else if(sortCol==='mobile'){ av=a.mobile||''; bv=b.mobile||''; }
+    else if(sortCol==='balance'){ av=calcBalance(a); bv=calcBalance(b); }
+    else if(sortCol==='entries'){ av=a.entries.length; bv=b.entries.length; }
+    if(av<bv) return -1*sortDir; if(av>bv) return 1*sortDir; return 0;
+  });
+
+  let tableHTML;
+  if(!rows.length){
+    tableHTML = '<div class="dash-empty">'+(parties.length?'No parties match your search':'No parties yet. Click "+ Add New Party" in the sidebar to get started.')+'</div>';
+  } else {
+    tableHTML = '<table class="dash-table"><thead><tr>'+
+      '<th onclick="setSortCol(\'name\')">Party Name</th>'+
+      '<th onclick="setSortCol(\'mobile\')">Mobile</th>'+
+      '<th>GST</th>'+
+      '<th class="num" onclick="setSortCol(\'entries\')">Entries</th>'+
+      '<th class="num" onclick="setSortCol(\'balance\')">Balance</th>'+
+      '</tr></thead><tbody>'+
+      rows.map(p=>{
+        const bal=calcBalance(p);
+        return '<tr onclick="openParty('+p.id+')">'+
+          '<td style="font-weight:600">'+esc(p.name)+'</td>'+
+          '<td>'+esc(p.mobile||'—')+'</td>'+
+          '<td>'+esc(p.gst||'—')+'</td>'+
+          '<td class="num">'+p.entries.length+'</td>'+
+          '<td class="num" style="color:'+(bal>=0?'#dc2626':'#059669')+'">'+fmtNum(Math.abs(bal))+' '+(bal>=0?'Dr':'Cr')+'</td>'+
+          '</tr>';
+      }).join('') + '</tbody></table>';
+  }
+
+  return '<div class="dashboard">'+
+    '<div class="dash-title">All Parties</div>'+
+    '<div class="dash-sub">Overview of every party ledger</div>'+
+    '<div class="dash-stats">'+
+      '<div class="dstat"><div class="dstat-lbl">Total Parties</div><div class="dstat-val" style="color:#111">'+totalParties+'</div></div>'+
+      '<div class="dstat"><div class="dstat-lbl">Total Receivable (Dr)</div><div class="dstat-val" style="color:#dc2626">'+fmtNum(totalDr)+'</div></div>'+
+      '<div class="dstat"><div class="dstat-lbl">Total Payable (Cr)</div><div class="dstat-val" style="color:#059669">'+fmtNum(totalCr)+'</div></div>'+
+    '</div>'+
+    '<div class="dash-search-row">'+
+      '<input class="dash-search" id="dash-search-input" placeholder="🔍 Search by name, mobile, or GST..." value="'+esc(window.__dashSearch||'')+'" oninput="window.__dashSearch=this.value;renderMain()"/>'+
+    '</div>'+
+    '<div class="dash-table-wrap">'+tableHTML+'</div>'+
+  '</div>';
+}
+
+function setSortCol(col){
+  if(sortCol===col) sortDir*=-1; else { sortCol=col; sortDir=1; }
+  renderMain();
+  // restore focus to search box
+  setTimeout(()=>{ const el=document.getElementById('dash-search-input'); if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length);} },0);
+}
+
+// ═══════════════════════════════════════
+// PARTY LEDGER VIEW
+// ═══════════════════════════════════════
+function renderPartyLedger(party){
+  const bal = calcBalance(party);
+  const {totalDebit, totalCredit} = calcTotals(party);
+  const initial = (party.name||'?').trim().charAt(0).toUpperCase();
+
+  let tagsHTML = '';
+  if(party.mobile) tagsHTML += '<span class="party-box-tag">📞 '+esc(party.mobile)+'</span>';
+  if(party.email) tagsHTML += '<span class="party-box-tag">✉ '+esc(party.email)+'</span>';
+  if(party.gst) tagsHTML += '<span class="party-box-tag">GST: '+esc(party.gst)+'</span>';
+  if(party.address) tagsHTML += '<span class="party-box-tag">📍 '+esc(party.address)+'</span>';
+
+  let entriesHTML;
+  if(!party.entries.length){
+    entriesHTML = '<tr class="empty-row"><td colspan="6">No entries yet — add the first one above</td></tr>';
+  } else {
+    let running = party.openingType==='dr' ? party.openingBal : -party.openingBal;
+    entriesHTML = '<tr style="background:#fafbff">'+
+      '<td class="date-cell">—</td><td style="font-weight:600;color:#666">Opening Balance</td>'+
+      '<td class="num">'+(party.openingType==='dr'?fmtNum(party.openingBal):'')+'</td>'+
+      '<td class="num">'+(party.openingType==='cr'?fmtNum(party.openingBal):'')+'</td>'+
+      '<td class="num balance-cell">'+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</td><td></td></tr>';
+    party.entries.forEach(e=>{
+      running += e.debit - e.credit;
+      entriesHTML += '<tr>'+
+        '<td class="date-cell">'+fmtDate(e.date)+'</td>'+
+        '<td class="particulars-cell">'+esc(e.particulars)+'</td>'+
+        '<td class="num debit-cell">'+(e.debit?fmtNum(e.debit):'')+'</td>'+
+        '<td class="num credit-cell">'+(e.credit?fmtNum(e.credit):'')+'</td>'+
+        '<td class="num balance-cell">'+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</td>'+
+        '<td><button class="del-btn" onclick="removeEntry('+e.id+')">×</button></td></tr>';
+    });
+  }
+
+  return '<div class="topbar">'+
+    '<div class="tb-left"><button class="tb-back" onclick="backToDashboard()">← All Parties</button><div class="tb-party-title">'+esc(party.name)+'</div></div>'+
+    '<div class="topbar-actions">'+
+      '<button class="tb-btn" onclick="openImportChoiceModal()">📥 Import</button>'+
+      '<button class="tb-btn" onclick="exportPartyJSON()">💾 Backup</button>'+
+      '<button class="tb-btn green" onclick="exportExcel()">📊 Excel</button>'+
+      '<button class="tb-btn primary" onclick="exportPDF()">⬇ PDF</button>'+
+      '<button class="tb-btn danger" onclick="deleteParty()">🗑</button>'+
+    '</div></div>'+
+  '<div class="container">'+
+
+    '<div class="party-box">'+
+      '<div class="party-box-avatar">'+initial+'</div>'+
+      '<div class="party-box-info"><div class="party-box-name">'+esc(party.name)+'</div><div class="party-box-tags">'+(tagsHTML||'<span class="party-box-tag" style="color:#ccc">No contact details added</span>')+'</div></div>'+
+      '<button class="party-box-edit" onclick="toggleEditParty()">✎ Edit Details</button>'+
+    '</div>'+
+
+    '<div class="acct-card" id="edit-party-card" style="display:none">'+
+      '<div class="party-title">👤 Edit Party Details</div>'+
+      '<div class="party-grid">'+
+        '<div class="acct-field"><label class="acct-lbl">Party Name</label><input class="acct-inp" id="party-name" value="'+esc(party.name)+'" oninput="updatePartyField(\'name\',this.value)"/></div>'+
+        '<div class="acct-field"><label class="acct-lbl">Mobile Number</label><input class="acct-inp" id="party-mobile" value="'+esc(party.mobile)+'" oninput="updatePartyField(\'mobile\',this.value)"/></div>'+
+        '<div class="acct-field"><label class="acct-lbl">Email</label><input class="acct-inp" id="party-email" value="'+esc(party.email)+'" oninput="updatePartyField(\'email\',this.value)"/></div>'+
+        '<div class="acct-field"><label class="acct-lbl">GST Number</label><input class="acct-inp" id="party-gst" value="'+esc(party.gst)+'" oninput="updatePartyField(\'gst\',this.value)"/></div>'+
+        '<div class="acct-field" style="flex:1 1 100%"><label class="acct-lbl">Address</label><textarea class="acct-inp" id="party-address" rows="2" style="resize:vertical" oninput="updatePartyField(\'address\',this.value)">'+esc(party.address)+'</textarea></div>'+
+      '</div>'+
+      '<div class="acct-row" style="margin-top:14px">'+
+        '<div class="acct-field" style="max-width:200px"><label class="acct-lbl">Opening Balance</label><input class="acct-inp" type="number" value="'+party.openingBal+'" oninput="updatePartyField(\'openingBal\',parseFloat(this.value)||0)"/></div>'+
+        '<div class="acct-field" style="max-width:200px"><label class="acct-lbl">Opening Type</label><select class="acct-inp" onchange="updatePartyField(\'openingType\',this.value)"><option value="dr" '+(party.openingType==='dr'?'selected':'')+'>Debit (Dr)</option><option value="cr" '+(party.openingType==='cr'?'selected':'')+'>Credit (Cr)</option></select></div>'+
+      '</div>'+
+      '<textarea class="note-textarea" placeholder="Notes (optional)" oninput="updatePartyField(\'note\',this.value)">'+esc(party.note)+'</textarea>'+
+      '<div class="save-panel">'+
+        '<div class="save-mode-row"><span class="save-mode-lbl">💾 SAVE TO BROWSER</span></div>'+
+        '<div class="save-status active">✓ Always on — your data is saved automatically in this browser, even after a refresh</div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="summary-row">'+
+      '<div class="sum-card"><div class="sum-lbl">Total Debit</div><div class="sum-val debit">'+fmtNum(totalDebit)+'</div><div class="sum-sub">'+party.entries.filter(e=>e.debit>0).length+' entries</div></div>'+
+      '<div class="sum-card"><div class="sum-lbl">Total Credit</div><div class="sum-val credit">'+fmtNum(totalCredit)+'</div><div class="sum-sub">'+party.entries.filter(e=>e.credit>0).length+' entries</div></div>'+
+      '<div class="sum-card"><div class="sum-lbl">Closing Balance</div><div class="sum-val" style="color:'+(bal>=0?'#dc2626':'#059669')+'">'+fmtNum(Math.abs(bal))+'</div><div class="sum-sub">'+(bal>=0?'Debit (Dr)':'Credit (Cr)')+'</div></div>'+
+    '</div>'+
+
+    '<div class="entry-card">'+
+      '<div class="entry-title">+ Add Entry</div>'+
+      '<div class="entry-grid">'+
+        '<div><label class="ef-lbl">Date</label><input class="ef-inp" type="date" id="ef-date"/></div>'+
+        '<div><label class="ef-lbl">Particulars</label><input class="ef-inp" id="ef-particulars" placeholder="e.g. Tent + chairs for wedding" onkeydown="if(event.key===\'Enter\')addEntry()"/></div>'+
+        '<div><label class="ef-lbl">Debit</label><input class="ef-inp" type="number" id="ef-debit" placeholder="0" onkeydown="if(event.key===\'Enter\')addEntry()"/></div>'+
+        '<div><label class="ef-lbl">Credit</label><input class="ef-inp" type="number" id="ef-credit" placeholder="0" onkeydown="if(event.key===\'Enter\')addEntry()"/></div>'+
+        '<button class="ef-add-btn" onclick="addEntry()">+ Add Entry</button>'+
+      '</div></div>'+
+
+    '<div class="ledger-card"><table class="ledger"><thead><tr>'+
+      '<th style="width:110px">Date</th><th>Particulars</th><th class="num" style="width:110px">Debit</th><th class="num" style="width:110px">Credit</th><th class="num" style="width:120px">Balance</th><th style="width:40px"></th>'+
+    '</tr></thead><tbody>'+entriesHTML+'</tbody></table></div>'+
+
+    '<div class="export-row"><button class="tb-btn danger" onclick="clearAllEntries()">🗑 Clear All Entries</button></div>'+
+
+  '</div>';
+}
+
+function toggleEditParty(){
+  const card = document.getElementById('edit-party-card');
+  card.style.display = card.style.display==='none' ? 'block' : 'none';
+}
+
+function updatePartyField(field, val){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  party[field] = val;
+  if(field==='name' || field==='mobile' || field==='email' || field==='gst' || field==='address'){
+    renderSidebar();
+    document.querySelector('.tb-party-title').textContent = party.name;
+    document.querySelector('.party-box-name').textContent = party.name;
+  }
+  saveIfAuto();
+}
+
+// ═══════════════════════════════════════
+// PARTY CRUD
+// ═══════════════════════════════════════
+function openAddPartyModal(){
+  ['new-party-name','new-party-mobile','new-party-email','new-party-gst','new-party-address'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('new-party-opening').value='0';
+  document.getElementById('add-party-modal').classList.add('show');
+}
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+
+function createParty(){
+  const name = document.getElementById('new-party-name').value.trim();
+  if(!name){ alert('Please enter a party name.'); return; }
+  const party = {
+    id: partyIdc++,
+    name,
+    mobile: document.getElementById('new-party-mobile').value.trim(),
+    email: document.getElementById('new-party-email').value.trim(),
+    gst: document.getElementById('new-party-gst').value.trim(),
+    address: document.getElementById('new-party-address').value.trim(),
+    openingBal: parseFloat(document.getElementById('new-party-opening').value)||0,
+    openingType: 'dr',
+    note: '',
+    entries: [],
+    entryIdc: 1,
+  };
+  parties.push(party);
+  closeModal('add-party-modal');
+  renderSidebar();
+  saveIfAuto();
+  openParty(party.id);
+}
+
+function deleteParty(){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  if(confirm('Delete party "'+party.name+'" and all '+party.entries.length+' entries? This cannot be undone.')){
+    parties = parties.filter(p=>p.id!==activePartyId);
+    activePartyId = null;
+    renderSidebar();
+    renderMain();
+    saveIfAuto();
+  }
+}
+
+// ═══════════════════════════════════════
+// ENTRIES
+// ═══════════════════════════════════════
+function addEntry(){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  const date = document.getElementById('ef-date').value;
+  const particulars = document.getElementById('ef-particulars').value.trim();
+  const debit = document.getElementById('ef-debit').value;
+  const credit = document.getElementById('ef-credit').value;
+
+  if(!date){ alert('Please select a date.'); return; }
+  if(!particulars){ alert('Please enter particulars.'); return; }
+  if(!debit && !credit){ alert('Please enter a debit or credit amount.'); return; }
+  if(debit && credit){ alert('Enter only one of Debit or Credit, not both.'); return; }
+
+  party.entries.push({ id: entryIdcGlobal++, date, particulars, debit: debit?parseFloat(debit):0, credit: credit?parseFloat(credit):0 });
+  party.entries.sort((a,b)=> new Date(a.date)-new Date(b.date) || a.id-b.id);
+
+  // Remember this date — it will be restored after renderMain() rebuilds the form
+  lastUsedDate = date;
+
+  document.getElementById('ef-particulars').value='';
+  document.getElementById('ef-debit').value='';
+  document.getElementById('ef-credit').value='';
+
+  renderMain();
+  renderSidebar();
+  saveIfAuto();
+  document.getElementById('ef-particulars').focus();
+}
+
+function removeEntry(id){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  party.entries = party.entries.filter(e=>e.id!==id);
+  renderMain();
+  renderSidebar();
+  saveIfAuto();
+}
+
+function clearAllEntries(){
+  const party = getParty(activePartyId);
+  if(!party || !party.entries.length) return;
+  if(confirm('Remove all '+party.entries.length+' entries for '+party.name+'?')){
+    party.entries = [];
+    renderMain();
+    renderSidebar();
+    saveIfAuto();
+  }
+}
+
+// ═══════════════════════════════════════
+// BACKUP / RESTORE (ALL DATA)
+// ═══════════════════════════════════════
+function exportAllJSON(){
+  const blob = new Blob([JSON.stringify({parties,partyIdc,entryIdcGlobal},null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='godavari_ledger_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+function importAllJSON(e){
+  const file = e.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = ev=>{
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!confirm('This will replace ALL current parties and entries with the backup data. Continue?')) return;
+      parties = data.parties||[];
+      partyIdc = data.partyIdc||1;
+      entryIdcGlobal = data.entryIdcGlobal||1;
+      activePartyId = null;
+      renderSidebar();
+      renderMain();
+      saveIfAuto();
+      alert('Backup restored successfully!');
+    }catch(err){ alert('Invalid backup file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+function exportPartyJSON(){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  const blob = new Blob([JSON.stringify(party,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name = party.name.replace(/[^a-z0-9]/gi,'_');
+  a.href=url; a.download=name+'_ledger.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ═══════════════════════════════════════
+// EXCEL IMPORT — PARTIES (from sidebar) or ENTRIES (from party view)
+// ═══════════════════════════════════════
+function handlePartiesImport(e){
+  pendingImportFile = e.target.files[0];
+  e.target.value='';
+  if(!pendingImportFile) return;
+  // Sidebar button is always "parties" mode — import directly
+  doImportParties(pendingImportFile);
+}
+
+function openImportChoiceModal(){
+  selectedImportType = null;
+  document.getElementById('opt-parties').classList.remove('selected');
+  document.getElementById('opt-continue').classList.remove('selected');
+  document.getElementById('opt-entries').classList.remove('selected');
+  document.getElementById('import-confirm-btn').disabled = true;
+  document.getElementById('import-choice-modal').classList.add('show');
+}
+function selectImportType(type){
+  selectedImportType = type;
+  document.getElementById('opt-parties').classList.toggle('selected', type==='parties');
+  document.getElementById('opt-continue').classList.toggle('selected', type==='continue');
+  document.getElementById('opt-entries').classList.toggle('selected', type==='entries');
+  document.getElementById('import-confirm-btn').disabled = false;
+}
+function confirmImportType(){
+  closeModal('import-choice-modal');
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.xlsx,.xls,.csv';
+  input.onchange = (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(selectedImportType==='parties') doImportParties(file);
+    else if(selectedImportType==='continue') doContinueLedger(file);
+    else doImportEntries(file);
+  };
+  input.click();
+}
+
+function readWorkbook(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try{
+        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet,{defval:''});
+        resolve(rows);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function findCol(row, candidates){
+  const keys = Object.keys(row);
+  for(const cand of candidates){
+    const match = keys.find(k=>k.toLowerCase().trim()===cand.toLowerCase());
+    if(match) return match;
+  }
+  // fuzzy contains match
+  for(const cand of candidates){
+    const match = keys.find(k=>k.toLowerCase().includes(cand.toLowerCase()));
+    if(match) return match;
+  }
+  return null;
+}
+
+async function doImportParties(file){
+  try{
+    const rows = await readWorkbook(file);
+    if(!rows.length){ alert('No data found in file.'); return; }
+
+    const nameCol = findCol(rows[0], ['name','party name','party']);
+    const mobileCol = findCol(rows[0], ['mobile','phone','contact']);
+    const emailCol = findCol(rows[0], ['email','e-mail']);
+    const gstCol = findCol(rows[0], ['gst','gst number','gstin']);
+    const addrCol = findCol(rows[0], ['address']);
+    const openCol = findCol(rows[0], ['opening balance','opening','balance']);
+
+    if(!nameCol){ alert('Could not find a "Name" column in the file. Please check the column headers.'); return; }
+
+    let created=0, skipped=0;
+    rows.forEach(r=>{
+      const name = String(r[nameCol]||'').trim();
+      if(!name){ skipped++; return; }
+      parties.push({
+        id: partyIdc++,
+        name,
+        mobile: mobileCol?String(r[mobileCol]||'').trim():'',
+        email: emailCol?String(r[emailCol]||'').trim():'',
+        gst: gstCol?String(r[gstCol]||'').trim():'',
+        address: addrCol?String(r[addrCol]||'').trim():'',
+        openingBal: openCol?(parseFloat(r[openCol])||0):0,
+        openingType: 'dr',
+        note: '',
+        entries: [],
+        entryIdc: 1,
+      });
+      created++;
+    });
+
+    renderSidebar();
+    saveIfAuto();
+    alert('Import complete!\n\n'+created+' parties created'+(skipped?'\n'+skipped+' rows skipped (missing name)':''));
+  }catch(err){
+    alert('Failed to read Excel file: '+err.message);
+    console.error(err);
+  }
+}
+
+async function doImportEntries(file){
+  const party = getParty(activePartyId);
+  if(!party){ alert('Please open a party first.'); return; }
+  try{
+    const rows = await readWorkbook(file);
+    if(!rows.length){ alert('No data found in file.'); return; }
+
+    const dateCol = findCol(rows[0], ['date']);
+    const partCol = findCol(rows[0], ['particulars','description','details','narration']);
+    const debitCol = findCol(rows[0], ['debit','dr']);
+    const creditCol = findCol(rows[0], ['credit','cr']);
+
+    if(!partCol){ alert('Could not find a "Particulars" column in the file.'); return; }
+
+    let created=0, skipped=0;
+    rows.forEach(r=>{
+      const particulars = String(r[partCol]||'').trim();
+      if(!particulars){ skipped++; return; }
+      let dateVal = dateCol ? r[dateCol] : '';
+      let dateStr = '';
+      if(dateVal instanceof Date){
+        dateStr = dateVal.toISOString().slice(0,10);
+      } else if(typeof dateVal === 'number'){
+        // Excel serial date
+        const d = new Date(Math.round((dateVal-25569)*86400*1000));
+        dateStr = d.toISOString().slice(0,10);
+      } else if(dateVal){
+        const parsed = new Date(dateVal);
+        dateStr = isNaN(parsed) ? new Date().toISOString().slice(0,10) : parsed.toISOString().slice(0,10);
+      } else {
+        dateStr = new Date().toISOString().slice(0,10);
+      }
+      const debit = debitCol ? (parseFloat(r[debitCol])||0) : 0;
+      const credit = creditCol ? (parseFloat(r[creditCol])||0) : 0;
+      if(!debit && !credit){ skipped++; return; }
+
+      party.entries.push({ id: entryIdcGlobal++, date: dateStr, particulars, debit, credit });
+      created++;
+    });
+
+    party.entries.sort((a,b)=> new Date(a.date)-new Date(b.date) || a.id-b.id);
+
+    renderMain();
+    renderSidebar();
+    saveIfAuto();
+    alert('Import complete!\n\n'+created+' entries added'+(skipped?'\n'+skipped+' rows skipped':''));
+  }catch(err){
+    alert('Failed to read Excel file: '+err.message);
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════
+// CONTINUE LEDGER — re-import a previously exported
+// ledger Excel back into the SAME party.
+// Restores Party Details from the header rows (Party Name,
+// Mobile, Email, GST, Address) and adds only NEW transaction
+// rows — duplicates (same date + particulars + amount) are
+// skipped automatically.
+// ═══════════════════════════════════════
+
+// Excel serial date (or Date object, or string) -> 'YYYY-MM-DD'
+function parseAnyDate(val){
+  if(val instanceof Date) return val.toISOString().slice(0,10);
+  if(typeof val === 'number'){
+    const d = new Date(Math.round((val-25569)*86400*1000));
+    return isNaN(d) ? '' : d.toISOString().slice(0,10);
+  }
+  if(val){
+    const p = new Date(val);
+    return isNaN(p) ? '' : p.toISOString().slice(0,10);
+  }
+  return '';
+}
+
+// Read the raw sheet (array-of-arrays) so we can scan header
+// metadata rows AND find the transaction table within the same file.
+function readWorkbookRaw(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      try{
+        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet,{header:1,defval:'',raw:true});
+        resolve(rows);
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function doContinueLedger(file){
+  const party = getParty(activePartyId);
+  if(!party){ alert('Please open a party first.'); return; }
+
+  try{
+    const raw = await readWorkbookRaw(file); // array of arrays
+    if(!raw.length){ alert('No data found in file.'); return; }
+
+    // ── 1. Extract party detail header rows (label/value pairs at the top) ──
+    // These appear before the blank row + the 'Date,Particulars,Debit,Credit,Balance' table header
+    const labelMap = {
+      'party name': 'name',
+      'mobile': 'mobile',
+      'email': 'email',
+      'gst number': 'gst',
+      'address': 'address',
+    };
+    const extracted = {};
+    let tableHeaderIdx = -1;
+
+    for(let i=0;i<raw.length;i++){
+      const row = raw[i];
+      if(!row || !row.length) continue;
+      const firstCell = String(row[0]||'').trim().toLowerCase().replace(/:$/,'');
+      // Detect the transaction table header row
+      const rowJoined = row.map(c=>String(c||'').trim().toLowerCase()).join('|');
+      if(rowJoined.includes('date') && rowJoined.includes('particulars') && rowJoined.includes('debit') && rowJoined.includes('credit')){
+        tableHeaderIdx = i;
+        break;
+      }
+      // Detect label rows like "Party Name:" "Mobile:" etc.
+      if(labelMap[firstCell] && row[1]!==undefined && String(row[1]).trim()!==''){
+        extracted[labelMap[firstCell]] = String(row[1]).trim();
+      }
+    }
+
+    if(tableHeaderIdx===-1){
+      alert('This file doesn\'t look like a ledger exported from this app.\n\nCould not find the transaction table (Date / Particulars / Debit / Credit columns). Please use the "Ledger Entries" option instead for general Excel files.');
+      return;
+    }
+
+    // ── 2. Restore party details (only fields found in the file, only if currently empty or always — per user choice: always restore) ──
+    let detailsRestored = [];
+    if(extracted.name && extracted.name !== party.name){ party.name = extracted.name; detailsRestored.push('Name'); }
+    if(extracted.mobile){ party.mobile = extracted.mobile; detailsRestored.push('Mobile'); }
+    if(extracted.email){ party.email = extracted.email; detailsRestored.push('Email'); }
+    if(extracted.gst){ party.gst = extracted.gst; detailsRestored.push('GST'); }
+    if(extracted.address){ party.address = extracted.address; detailsRestored.push('Address'); }
+
+    // ── 3. Parse the transaction table ──
+    const headerRow = raw[tableHeaderIdx].map(c=>String(c||'').trim().toLowerCase());
+    const dateIdx = headerRow.indexOf('date');
+    const partIdx = headerRow.indexOf('particulars');
+    const debitIdx = headerRow.indexOf('debit');
+    const creditIdx = headerRow.indexOf('credit');
+
+    // Build a lookup of existing entries for dedup: "date|particulars|debit|credit"
+    const existingKeys = new Set(
+      party.entries.map(e => e.date+'|'+e.particulars.trim().toLowerCase()+'|'+e.debit+'|'+e.credit)
+    );
+
+    let added=0, duplicates=0, skipped=0, isOpeningRowSeen=false;
+
+    for(let i=tableHeaderIdx+1; i<raw.length; i++){
+      const row = raw[i];
+      if(!row || !row.length) continue;
+      const particulars = partIdx>=0 ? String(row[partIdx]||'').trim() : '';
+      if(!particulars) continue;
+
+      // Skip the "Opening Balance" row and "TOTAL" row — those are summary rows, not transactions
+      const lowerPart = particulars.toLowerCase();
+      if(lowerPart==='opening balance'){ isOpeningRowSeen=true; continue; }
+      if(lowerPart==='total') continue;
+
+      const dateStr = dateIdx>=0 ? parseAnyDate(row[dateIdx]) : '';
+      const debit = debitIdx>=0 ? (parseFloat(row[debitIdx])||0) : 0;
+      const credit = creditIdx>=0 ? (parseFloat(row[creditIdx])||0) : 0;
+      if(!debit && !credit){ skipped++; continue; }
+      if(!dateStr){ skipped++; continue; }
+
+      const key = dateStr+'|'+particulars.trim().toLowerCase()+'|'+debit+'|'+credit;
+      if(existingKeys.has(key)){ duplicates++; continue; }
+
+      party.entries.push({ id: entryIdcGlobal++, date: dateStr, particulars, debit, credit });
+      existingKeys.add(key);
+      added++;
+    }
+
+    party.entries.sort((a,b)=> new Date(a.date)-new Date(b.date) || a.id-b.id);
+
+    renderMain();
+    renderSidebar();
+    saveIfAuto();
+
+    let msg = 'Ledger continued successfully!\n\n';
+    msg += added+' new entries added\n';
+    if(duplicates) msg += duplicates+' duplicate entries skipped (already existed)\n';
+    if(skipped) msg += skipped+' rows skipped (incomplete data)\n';
+    if(detailsRestored.length) msg += '\nParty details restored: '+detailsRestored.join(', ');
+    alert(msg);
+
+  }catch(err){
+    alert('Failed to read Excel file: '+err.message);
+    console.error(err);
+  }
+}
+
+// ═══════════════════════════════════════
+// EXPORT: EXCEL (current party)
+// ═══════════════════════════════════════
+function exportExcel(){
+  const party = getParty(activePartyId);
+  if(!party) return;
+
+  const rows = [];
+  rows.push(['Godavari Tent Works - Ledger']);
+  rows.push(['Party Name:', party.name]);
+  if(party.mobile) rows.push(['Mobile:', party.mobile]);
+  if(party.email) rows.push(['Email:', party.email]);
+  if(party.gst) rows.push(['GST Number:', party.gst]);
+  if(party.address) rows.push(['Address:', party.address]);
+  rows.push(['Generated:', new Date().toLocaleDateString('en-GB')]);
+  rows.push([]);
+  rows.push(['Date','Particulars','Debit','Credit','Balance']);
+
+  let running = party.openingType==='dr' ? party.openingBal : -party.openingBal;
+  rows.push(['','Opening Balance', party.openingType==='dr'?party.openingBal:'', party.openingType==='cr'?party.openingBal:'', Math.abs(running)+' '+(running>=0?'Dr':'Cr')]);
+
+  party.entries.forEach(e=>{
+    running += e.debit - e.credit;
+    rows.push([fmtDate(e.date), e.particulars, e.debit||'', e.credit||'', Math.abs(running)+' '+(running>=0?'Dr':'Cr')]);
+  });
+
+  rows.push([]);
+  const {totalDebit,totalCredit} = calcTotals(party);
+  rows.push(['','TOTAL', totalDebit, totalCredit, Math.abs(running)+' '+(running>=0?'Dr':'Cr')]);
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:35},{wch:14},{wch:14},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+  XLSX.writeFile(wb, party.name.replace(/[^a-z0-9]/gi,'_')+'_ledger.xlsx');
+}
+
+// ═══════════════════════════════════════
+// EXPORT: PDF (current party)
+// ═══════════════════════════════════════
+async function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector('script[src="'+src+'"]')) return res();
+    const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+function buildPdfPages(party){
+  // Row capacities reduced to leave safe room for header, footer, and TOTAL block.
+  // Page is 1123px tall. First page header+title+tags block uses ~260px, footer ~40px.
+  // Each table row is ~30px tall in the rendered PDF font (11px + padding).
+  const ROWS_PER_PAGE_FIRST = 18;   // first page: room for header + party box + footer
+  const ROWS_PER_PAGE_NEXT  = 26;   // continuation pages: just mini-header + footer
+  const TOTAL_BLOCK_ROWS    = 2;    // reserve ~2 row-heights worth of space for the TOTAL summary
+
+  let running = party.openingType==='dr' ? party.openingBal : -party.openingBal;
+  const allRows = [{date:'', particulars:'Opening Balance', debit:party.openingType==='dr'?party.openingBal:0, credit:party.openingType==='cr'?party.openingBal:0, isOpening:true, balance:running}];
+  party.entries.forEach(e=>{
+    running += e.debit - e.credit;
+    allRows.push({date:fmtDate(e.date), particulars:e.particulars, debit:e.debit, credit:e.credit, balance:running});
+  });
+
+  // ── Pack rows into pages ──
+  const pages = [];
+  let remaining = [...allRows];
+  let first = true;
+  while(remaining.length){
+    const capacity = first ? ROWS_PER_PAGE_FIRST : ROWS_PER_PAGE_NEXT;
+    pages.push(remaining.splice(0, capacity));
+    first = false;
+  }
+  if(!pages.length) pages.push([]);
+
+  // ── Reserve room for the TOTAL block on the actual last page ──
+  // If the last page's row count would leave no room for the totals summary,
+  // move the overflow rows to a fresh final page instead of cramming them in.
+  const lastCapacity = pages.length===1 ? ROWS_PER_PAGE_FIRST : ROWS_PER_PAGE_NEXT;
+  if(pages.length && pages[pages.length-1].length > (lastCapacity - TOTAL_BLOCK_ROWS)){
+    const overflowCount = pages[pages.length-1].length - (lastCapacity - TOTAL_BLOCK_ROWS);
+    if(overflowCount > 0){
+      const movedRows = pages[pages.length-1].splice(pages[pages.length-1].length - overflowCount, overflowCount);
+      pages.push(movedRows);
+    }
+  }
+
+  const {totalDebit,totalCredit} = calcTotals(party);
+
+  let html = '';
+  pages.forEach((pageRows,pi)=>{
+    const isFirst = pi===0, isLast = pi===pages.length-1;
+    html += '<div class="pdf-page">';
+    if(isFirst){
+      html += '<div class="pdf-header"><img src="'+LOGO_DATA+'" alt="logo"/><div class="pdf-divider"></div><div><div class="pdf-biz-name">Godavari Tent Works</div><div class="pdf-biz-sub">CONTACT : 9295756242 &nbsp;|&nbsp; Chirala, Andhra Pradesh</div></div></div>';
+      html += '<div class="pdf-title-row"><div><div class="pdf-ledger-title">Ledger Account: '+esc(party.name)+'</div>'+(party.note?'<div class="pdf-period">'+esc(party.note)+'</div>':'')+'</div><div class="pdf-period">Generated: '+new Date().toLocaleDateString('en-GB')+'</div></div>';
+      const tags=[];
+      if(party.mobile) tags.push('📞 '+esc(party.mobile));
+      if(party.email) tags.push('✉ '+esc(party.email));
+      if(party.gst) tags.push('GST: '+esc(party.gst));
+      if(party.address) tags.push('📍 '+esc(party.address));
+      if(tags.length) html += '<div style="background:#f9fafb;border:1px solid #eee;border-radius:6px;padding:10px 14px;margin-bottom:16px;font-size:10.5px;color:#555;display:flex;flex-wrap:wrap;gap:16px">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>';
+    } else {
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1.5px solid #ddd;margin-bottom:14px"><div style="font-size:13px;font-weight:700">Godavari Tent Works — '+esc(party.name)+'</div><div style="font-size:10px;color:#999">continued...</div></div>';
+    }
+    // Padding bottom on the table wrapper reserves room so rows never collide with the absolute footer
+    html += '<div style="padding-bottom:50px">';
+    html += '<table class="pdf-table"><thead><tr><th style="width:80px">Date</th><th>Particulars</th><th class="num" style="width:80px">Debit</th><th class="num" style="width:80px">Credit</th><th class="num" style="width:100px">Balance</th></tr></thead><tbody>';
+    pageRows.forEach(r=>{
+      html += '<tr'+(r.isOpening?' style="background:#f9fafb"':'')+'><td>'+(r.date||'—')+'</td><td style="'+(r.isOpening?'font-weight:600;color:#666':'')+'">'+esc(r.particulars)+'</td><td class="num" style="color:#dc2626">'+(r.debit?fmtNum(r.debit):'')+'</td><td class="num" style="color:#059669">'+(r.credit?fmtNum(r.credit):'')+'</td><td class="num" style="font-weight:700">'+fmtNum(Math.abs(r.balance))+' '+(r.balance>=0?'Dr':'Cr')+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    if(isLast){
+      html += '<div style="margin-top:16px;padding-top:12px;border-top:2px solid #111;display:flex;justify-content:space-between;font-size:12px;font-weight:700"><span>TOTAL</span><span style="display:flex;gap:24px"><span style="color:#dc2626">Dr '+fmtNum(totalDebit)+'</span><span style="color:#059669">Cr '+fmtNum(totalCredit)+'</span><span>Closing: '+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</span></span></div>';
+    }
+    html += '</div>'; // close padding-bottom wrapper
+    html += '<div style="position:absolute;bottom:24px;left:48px;right:48px;display:flex;justify-content:space-between;font-size:9px;color:#bbb;border-top:1px solid #eee;padding-top:8px"><span>Page '+(pi+1)+' of '+pages.length+'</span><span>Godavari Tent Works</span></div>';
+    html += '</div>';
+  });
+  return html;
+}
+
+async function exportPDF(){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  const btn = event.target;
+  const origText = btn.textContent;
+  btn.textContent = '⏳ Generating...'; btn.disabled = true;
+  try{
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const container = document.getElementById('pdf-doc');
+    container.innerHTML = buildPdfPages(party);
+    await new Promise(r=>setTimeout(r,150));
+    const {jsPDF} = window.jspdf;
+    const pdf = new jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:false});
+    const pdfW = pdf.internal.pageSize.getWidth(), pdfH = pdf.internal.pageSize.getHeight();
+    const pageEls = container.querySelectorAll('.pdf-page');
+    for(let i=0;i<pageEls.length;i++){
+      const canvas = await html2canvas(pageEls[i],{scale:4,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',logging:false,imageTimeout:0,width:794,height:1123});
+      if(i>0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL('image/jpeg',1.0),'JPEG',0,0,pdfW,pdfH,'page'+i,'FAST');
+    }
+    pdf.save(party.name.replace(/[^a-z0-9]/gi,'_')+'_ledger.pdf');
+    container.innerHTML = '';
+  }catch(err){ alert('PDF export failed: '+err.message); console.error(err); }
+  finally{ btn.textContent=origText; btn.disabled=false; }
+}
+
+init();
+</script>
+</body>
+</html>
