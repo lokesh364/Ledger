@@ -186,7 +186,15 @@ td.balance-cell{color:var(--ink);font-weight:700}
 .empty-row td{text-align:center;padding:56px 16px;color:var(--ink-faint);font-size:13px}
 .del-btn{background:none;border:none;color:var(--rule);cursor:pointer;font-size:17px;padding:2px 6px;transition:color .15s;line-height:1}
 .del-btn:hover{color:var(--debit)}
-.particulars-cell{max-width:280px}
+.edit-btn{background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:14px;padding:2px 6px;transition:color .15s;line-height:1}
+.edit-btn:hover{color:var(--saffron-deep)}
+.save-entry-btn{background:var(--credit);color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.cancel-entry-btn{background:none;border:1px solid var(--rule);border-radius:5px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;color:var(--ink-soft);margin-left:4px}
+.edit-inp{border:1.5px solid var(--saffron);border-radius:6px;padding:4px 8px;font-size:12px;font-family:inherit;outline:none;width:100%}
+.particulars-cell{max-width:240px}
+.entry-tr{transition:background .15s}
+.entry-tr.swiped{background:var(--paper-deep)!important}
+.entry-tr.swiped td{opacity:.75}
 
 .export-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;flex-wrap:wrap}
 .note-textarea{width:100%;border:1.5px solid var(--rule);border-radius:9px;padding:11px 14px;font-size:13px;color:var(--ink);outline:none;resize:vertical;min-height:60px;margin-top:14px;font-family:inherit;background:var(--white)}
@@ -228,12 +236,49 @@ td.balance-cell{color:var(--ink);font-weight:700}
 .pdf-table td{padding:8px 10px;border-bottom:1px solid #eee}
 .pdf-table td.num{text-align:right;font-family:'IBM Plex Mono',monospace}
 
+/* ── Swipe-to-reveal row actions ── */
+.row-swipe-wrap{position:relative;overflow:hidden}
+.row-actions-reveal{position:absolute;right:0;top:0;bottom:0;display:flex;align-items:stretch;transform:translateX(100%);transition:transform .22s ease}
+.row-actions-reveal .act-edit{background:var(--saffron);color:#fff;border:none;padding:0 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.row-actions-reveal .act-del{background:var(--debit);color:#fff;border:none;padding:0 20px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px}
+.row-swipe-wrap.swiped .row-actions-reveal{transform:translateX(0)}
+.row-swipe-wrap.swiped td:not(.action-td){opacity:.7}
+
+/* ── Table scroll wrapper ── */
+.table-scroll-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:13px}
+.table-scroll-wrap table.ledger{min-width:600px}
+
 @media(max-width:900px){
   .app{flex-direction:column;height:auto;overflow:visible}
-  .sidebar{width:100%;min-width:unset;max-height:280px}
+  body{height:auto;overflow:auto}
+  .sidebar{width:100%;min-width:unset;max-height:260px;flex-shrink:0}
+  .main{overflow:visible;min-height:0}
   .entry-grid{grid-template-columns:1fr 1fr}
-  .summary-row{grid-template-columns:1fr}
+  .summary-row{grid-template-columns:1fr 1fr;gap:10px}
   .dash-stats{grid-template-columns:1fr}
+  .container{padding:16px 14px 40px}
+  .topbar{padding:12px 14px;flex-wrap:wrap;gap:8px;position:relative}
+  .topbar-actions{gap:5px}
+  .tb-btn{padding:7px 10px;font-size:11px;gap:4px}
+  /* Make ledger table horizontally scrollable */
+  .ledger-card{overflow:visible}
+  .table-scroll-wrap{border-radius:13px;box-shadow:var(--shadow-card)}
+  /* On mobile — hide desktop edit/del buttons, use swipe instead */
+  .desk-actions{display:none}
+  /* Swipe hint text under table */
+  .swipe-hint{display:flex!important}
+  /* Party box wraps nicely */
+  .party-box{flex-direction:column;align-items:flex-start;gap:12px}
+  .party-box-tags{flex-direction:column;gap:6px}
+  /* Summary 2-column on mobile */
+  .sum-card{padding:14px 16px}
+  .sum-val{font-size:20px}
+}
+@media(min-width:901px){
+  /* On desktop — show inline edit/del buttons, hide swipe actions */
+  .row-actions-reveal{display:none!important}
+  .mobile-actions{display:none}
+  .swipe-hint{display:none!important}
 }
 </style>
 </head>
@@ -351,6 +396,7 @@ let partyIdc = 1;
 let entryIdcGlobal = 1;
 let autosaveOn = true; // always-on by default — no toggle needed, data is never lost on refresh
 let lastUsedDate = ''; // remembers the last entry date so it stays set after each entry is added
+let editingEntryId = null; // id of the entry currently being edited inline
 let pendingImportFile = null;
 let selectedImportType = null;
 let sortCol = 'name', sortDir = 1;
@@ -452,10 +498,71 @@ function renderMain(){
     const party = getParty(activePartyId);
     if(!party){ activePartyId=null; main.innerHTML = renderDashboard(); return; }
     main.innerHTML = renderPartyLedger(party);
-    // Restore the last-used date so the user doesn't have to re-select it after each entry
+    // Restore the last-used date
     const ef = document.getElementById('ef-date');
     if(ef) ef.value = lastUsedDate || new Date().toISOString().slice(0,10);
+    // Attach swipe listeners on mobile
+    attachSwipeListeners();
   }
+}
+
+// ── Swipe-left to reveal Edit / Delete on mobile ──────────────────
+function attachSwipeListeners(){
+  const rows = document.querySelectorAll('tr.entry-tr');
+  rows.forEach(tr=>{
+    const id = parseInt(tr.dataset.id);
+    let startX=0, startY=0, isSwiping=false;
+
+    tr.addEventListener('touchstart', e=>{
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      isSwiping = false;
+    }, {passive:true});
+
+    tr.addEventListener('touchmove', e=>{
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if(Math.abs(dy) > Math.abs(dx)) return; // vertical scroll — ignore
+      if(Math.abs(dx) > 8) isSwiping = true;
+    }, {passive:true});
+
+    tr.addEventListener('touchend', e=>{
+      if(!isSwiping) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if(dx < -40){
+        // Swipe left — close others, open this one
+        document.querySelectorAll('tr.entry-tr.swiped').forEach(r=>{
+          if(r!==tr){
+            r.classList.remove('swiped');
+            const b=r.querySelector('.swipe-revealed'); if(b) b.style.display='none';
+          }
+        });
+        tr.classList.add('swiped');
+        // Show the action buttons for this row, positioned at the row's right edge
+        const btns = tr.querySelector('.swipe-revealed');
+        if(btns){
+          const rect = tr.getBoundingClientRect();
+          btns.style.display='flex';
+          btns.style.top = rect.top+'px';
+          btns.style.height = rect.height+'px';
+        }
+      } else if(dx > 20){
+        tr.classList.remove('swiped');
+        const btns2 = tr.querySelector('.swipe-revealed');
+        if(btns2) btns2.style.display='none';
+      }
+    }, {passive:true});
+  });
+
+  // Tap anywhere else to close swiped rows
+  document.addEventListener('touchstart', e=>{
+    if(!e.target.closest('tr.entry-tr')){
+      document.querySelectorAll('tr.entry-tr.swiped').forEach(r=>{
+        r.classList.remove('swiped');
+        const b=r.querySelector('.swipe-revealed'); if(b) b.style.display='none';
+      });
+    }
+  }, {passive:true});
 }
 
 // ═══════════════════════════════════════
@@ -550,13 +657,39 @@ function renderPartyLedger(party){
       '<td class="num balance-cell">'+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</td><td></td></tr>';
     party.entries.forEach(e=>{
       running += e.debit - e.credit;
-      entriesHTML += '<tr>'+
-        '<td class="date-cell">'+fmtDate(e.date)+'</td>'+
-        '<td class="particulars-cell">'+esc(e.particulars)+'</td>'+
-        '<td class="num debit-cell">'+(e.debit?fmtNum(e.debit):'')+'</td>'+
-        '<td class="num credit-cell">'+(e.credit?fmtNum(e.credit):'')+'</td>'+
-        '<td class="num balance-cell">'+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</td>'+
-        '<td><button class="del-btn" onclick="removeEntry('+e.id+')">×</button></td></tr>';
+      if(editingEntryId===e.id){
+        entriesHTML += '<tr style="background:#FFF8F0">'+
+          '<td><input class="edit-inp" id="ei-date-'+e.id+'" type="date" value="'+e.date+'" style="width:130px"/></td>'+
+          '<td><input class="edit-inp" id="ei-part-'+e.id+'" value="'+esc(e.particulars)+'" style="width:100%"/></td>'+
+          '<td><input class="edit-inp" id="ei-dr-'+e.id+'" type="number" value="'+(e.debit||'')+'" placeholder="0" style="width:90px;text-align:right"/></td>'+
+          '<td><input class="edit-inp" id="ei-cr-'+e.id+'" type="number" value="'+(e.credit||'')+'" placeholder="0" style="width:90px;text-align:right"/></td>'+
+          '<td></td>'+
+          '<td style="white-space:nowrap">'+
+            '<button class="save-entry-btn" onclick="saveEntry('+e.id+')">✓ Save</button>'+
+            '<button class="cancel-entry-btn" onclick="cancelEdit()">✕</button>'+
+          '</td></tr>';
+      } else {
+        entriesHTML += '<tr class="entry-tr" data-id="'+e.id+'">'+
+          '<td class="date-cell">'+fmtDate(e.date)+'</td>'+
+          '<td class="particulars-cell">'+esc(e.particulars)+'</td>'+
+          '<td class="num debit-cell">'+(e.debit?fmtNum(e.debit):'')+'</td>'+
+          '<td class="num credit-cell">'+(e.credit?fmtNum(e.credit):'')+'</td>'+
+          '<td class="num balance-cell">'+fmtNum(Math.abs(running))+' '+(running>=0?'Dr':'Cr')+'</td>'+
+          '<td class="action-td" style="white-space:nowrap;min-width:80px">'+
+            // Desktop buttons — shown on desktop, hidden on mobile
+            '<span class="desk-actions">'+
+              '<button class="edit-btn" onclick="editEntry('+e.id+')" title="Edit">✎</button>'+
+              '<button class="del-btn" onclick="removeEntry('+e.id+')" title="Delete">×</button>'+
+            '</span>'+
+            // Mobile swipe hint arrow
+            '<span class="mobile-actions" style="color:var(--ink-faint);font-size:12px;padding:2px 6px">⟨</span>'+
+            // Mobile swipe revealed buttons (shown via JS swiped class)
+            '<span class="swipe-revealed" style="display:none;position:fixed;right:0;z-index:10;height:48px;align-items:stretch;box-shadow:-4px 0 12px rgba(0,0,0,.15)">'+
+              '<button style="background:var(--saffron);color:#fff;border:none;padding:0 22px;font-size:13px;font-weight:700;height:100%;cursor:pointer" onclick="editEntry('+e.id+')">✎ Edit</button>'+
+              '<button style="background:var(--debit);color:#fff;border:none;padding:0 22px;font-size:13px;font-weight:700;height:100%;cursor:pointer" onclick="removeEntry('+e.id+')">🗑 Del</button>'+
+            '</span>'+
+          '</td></tr>';
+      }
     });
   }
 
@@ -613,10 +746,11 @@ function renderPartyLedger(party){
         '<button class="ef-add-btn" onclick="addEntry()">+ Add Entry</button>'+
       '</div></div>'+
 
-    '<div class="ledger-card"><table class="ledger"><thead><tr>'+
+    '<div class="ledger-card"><div class="table-scroll-wrap"><table class="ledger"><thead><tr>'+
       '<th style="width:110px">Date</th><th>Particulars</th><th class="num" style="width:110px">Debit</th><th class="num" style="width:110px">Credit</th><th class="num" style="width:120px">Balance</th><th style="width:40px"></th>'+
     '</tr></thead><tbody>'+entriesHTML+'</tbody></table></div>'+
 
+    '<p class="swipe-hint" style="display:none;font-size:11px;color:var(--ink-faint);padding:8px 4px 0;text-align:right">← Swipe left on a row to edit or delete</p>'+
     '<div class="export-row"><button class="tb-btn danger" onclick="clearAllEntries()">🗑 Clear All Entries</button></div>'+
 
   '</div>';
@@ -716,6 +850,34 @@ function addEntry(){
   document.getElementById('ef-particulars').focus();
 }
 
+function editEntry(id){
+  editingEntryId = id;
+  renderMain();
+  // After render, focus the particulars input
+  setTimeout(()=>{ const el=document.getElementById('ei-part-'+id); if(el) el.focus(); }, 50);
+}
+function cancelEdit(){
+  editingEntryId = null;
+  renderMain();
+}
+function saveEntry(id){
+  const party = getParty(activePartyId);
+  if(!party) return;
+  const e = party.entries.find(e=>e.id===id);
+  if(!e) return;
+  const newDate  = document.getElementById('ei-date-'+id)?.value;
+  const newPart  = document.getElementById('ei-part-'+id)?.value.trim();
+  const newDr    = parseFloat(document.getElementById('ei-dr-'+id)?.value)||0;
+  const newCr    = parseFloat(document.getElementById('ei-cr-'+id)?.value)||0;
+  if(!newDate){ alert('Please enter a date.'); return; }
+  if(!newPart){ alert('Please enter particulars.'); return; }
+  if(!newDr && !newCr){ alert('Please enter a debit or credit amount.'); return; }
+  if(newDr && newCr){ alert('Enter only one of Debit or Credit, not both.'); return; }
+  e.date = newDate; e.particulars = newPart; e.debit = newDr; e.credit = newCr;
+  party.entries.sort((a,b)=> new Date(a.date)-new Date(b.date) || a.id-b.id);
+  editingEntryId = null;
+  renderMain(); renderSidebar(); saveIfAuto();
+}
 function removeEntry(id){
   const party = getParty(activePartyId);
   if(!party) return;
@@ -781,6 +943,13 @@ function exportPartyJSON(){
 // ═══════════════════════════════════════
 // EXCEL IMPORT — PARTIES (from sidebar) or ENTRIES (from party view)
 // ═══════════════════════════════════════
+function openDashImport(){
+  // From dashboard — always import parties
+  const input = document.createElement('input');
+  input.type='file'; input.accept='.xlsx,.xls,.csv';
+  input.onchange = (e)=>{ const file=e.target.files[0]; if(file) doImportParties(file); };
+  input.click();
+}
 function handlePartiesImport(e){
   pendingImportFile = e.target.files[0];
   e.target.value='';
@@ -1151,7 +1320,7 @@ function buildPdfPages(party){
   const allRows = [{date:'', particulars:'Opening Balance', debit:party.openingType==='dr'?party.openingBal:0, credit:party.openingType==='cr'?party.openingBal:0, isOpening:true, balance:running}];
   party.entries.forEach(e=>{
     running += e.debit - e.credit;
-    allRows.push({date:fmtDate(e.date), particulars:e.particulars, debit:e.debit, credit:e.credit, balance:running});
+    allRows.push({date:e.date, particulars:e.particulars, debit:e.debit, credit:e.credit, balance:running});
   });
 
   // ── Pack rows into pages ──
@@ -1199,7 +1368,7 @@ function buildPdfPages(party){
     html += '<div style="padding-bottom:50px">';
     html += '<table class="pdf-table"><thead><tr><th style="width:80px">Date</th><th>Particulars</th><th class="num" style="width:80px">Debit</th><th class="num" style="width:80px">Credit</th><th class="num" style="width:100px">Balance</th></tr></thead><tbody>';
     pageRows.forEach(r=>{
-      html += '<tr'+(r.isOpening?' style="background:#f9fafb"':'')+'><td>'+(r.date||'—')+'</td><td style="'+(r.isOpening?'font-weight:600;color:#666':'')+'">'+esc(r.particulars)+'</td><td class="num" style="color:#dc2626">'+(r.debit?fmtNum(r.debit):'')+'</td><td class="num" style="color:#059669">'+(r.credit?fmtNum(r.credit):'')+'</td><td class="num" style="font-weight:700">'+fmtNum(Math.abs(r.balance))+' '+(r.balance>=0?'Dr':'Cr')+'</td></tr>';
+      html += '<tr'+(r.isOpening?' style="background:#f9fafb"':'')+'><td>'+(r.date?fmtDate(r.date):'—')+'</td><td style="'+(r.isOpening?'font-weight:600;color:#666':'')+'">'+esc(r.particulars)+'</td><td class="num" style="color:#dc2626">'+(r.debit?fmtNum(r.debit):'')+'</td><td class="num" style="color:#059669">'+(r.credit?fmtNum(r.credit):'')+'</td><td class="num" style="font-weight:700">'+fmtNum(Math.abs(r.balance))+' '+(r.balance>=0?'Dr':'Cr')+'</td></tr>';
     });
     html += '</tbody></table>';
     if(isLast){
